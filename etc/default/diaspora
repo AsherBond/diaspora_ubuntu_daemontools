@@ -2,6 +2,8 @@ export RAILS_ENV=development
 DIASPORA_HOME=/usr/local/app/diaspora
 THIN_USER=nobody
 THIN_GROUP=nogroup
+RESQUE_WEB_PORT=5679
+DB_SERVICE=mysql
 # While waiting for dependent services, don't try more than
 # this many times. If the attempts exceeds this number, the
 # current run process will exit and it will try again. This
@@ -29,11 +31,23 @@ function wait_service() {
 	if [ $# -le 0 ]; then echo "missing service" 1>&2; return 1; fi
 	for service in $*; do 
 		case $service in
+		db)
+			wait_service -a $attempts $DB_SERVICE
+		;;
 		mongo)
 			args="localhost 27017"
 		;;
+		mysql)
+			args="localhost 3306"
+		;;
+		postgres)
+			args="localhost 5432"
+		;;
 		redis)
 			args="localhost 6379"
+		;;
+		resque_web)
+			args="localhost $RESQUE_WEB_PORT"
 		;;
 		smtp)
 			args="localhost 25"
@@ -71,7 +85,7 @@ function exec_thin() {
 	chown $THIN_USER:$THIN_GROUP $log || return 3
 	chmod 640 $log || return 4
 
-	wait_service mongo web redis websocket
+	wait_service db web redis websocket
 
 	exec /usr/local/bin/bundle exec thin \
 		-l $log \

@@ -6,13 +6,13 @@
 
 ## Rationale
 
-It seems that [Diaspora\*][durl] is very picky about which services start first. This 
-is my attempt to decouple from the monolithic ./script/server, which provides
-no recourse for services which disappear. As best I can tell, the order of
-services should be (mongo, nginx, redis), websocket, resque worker, and thin.
-The websocket run script will wait for redis availability. The resque worker 
-will wait for websocket, and thin will wait for mongo, nginx, redis, and
-websocket availability.
+It seems that [Diaspora\*][durl] is very picky about which services start
+first. This is my attempt to decouple from the monolithic ./script/server,
+which provides no recourse for services which disappear. As best I can tell,
+the order of services should be (mongo|mysql, nginx, redis, resque-web),
+websocket, resque-worker, and thin.  The websocket run script will wait for
+redis availability. The resque worker will wait for websocket, and thin will
+wait for mongo|mysql, nginx, redis, and websocket availability.
 
 If a script fails to connect to a dependent service 10 times, the run script
 will exit and try again. This allows you to monitor `svstat` for short lived
@@ -43,6 +43,12 @@ errant services as well.
     * `service mongodb stop`
     * `service nginx stop`
     * `service redis-server stop`
+1. Disable nginx daemonizing (ie `daemon off;`)
+    * `$EDITOR /etc/nginx/nginx.conf`
+		* `daemon off;`
+1. Disable redis daemonizing (ie `daemonize no`)
+    * `$EDITOR /etc/redis.conf`
+		* `daemonize no`
 1. Copy the etc skeleton into place
 `cd [GIT_SRC_TREE]`
     * `find etc usr | cpio -dpm /`
@@ -57,6 +63,9 @@ errant services as well.
 
 ## Customization
 
+1. Change the default db store
+    * `$EDITOR /etc/default/diaspora`
+		* `DB_SERVICE=NAME` # mysql or mongo
 1. Adding new thin processes
     * `mkdir /etc/service/99thin_N`
     * `cp /etc/service/99thin_0/run /etc/service/99thin_N`
@@ -71,13 +80,19 @@ errant services as well.
     * `DEFAULT_ATTEMPTS=10`
 1. Modify a single service's max attempts it will try to connect to a service
     * in a run script: `wait_service -a N`
+1. Change the default resque web port
+    * `$EDITOR /etc/default/diaspora`
+		* `RESQUE_WEB_PORT=N`
+		* `svc -i /etc/service/70resque_web`
+1. Add resque\_web to nginx
+    * See diaspora/chef/cookbooks/common/templates/default/nginx.conf.erb
 
-## diaspora_svc.sh usage
+## diaspora\_svc.sh usage
 
 `/usr/local/bin/diaspora_svc.sh {start|stop|restart|status|startall|stopall|restartall|statusall}`
 
 This script is by no means required, but there are some useful features to it.
-It allows you to easily control diaspora related services (resque_worker,
+It allows you to easily control diaspora related services (resque\_worker,
 redis, thin, and websocket) and everything else controlled by svscan.
 
 + *start* allows you to start diaspora related services in /etc/service
