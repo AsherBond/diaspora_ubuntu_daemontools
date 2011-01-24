@@ -10,6 +10,10 @@ DB_SERVICE=mysql
 # allows you to better monitor svstat output.
 DEFAULT_ATTEMPTS=10
 
+## remap STDERR to STDOUT for daemontools
+## so all errors will show up in the logs
+[ -z $PS1 ] && exec 2>&1
+
 # Wait for service(s), making no more than N attempts to
 # connect. If attempts is 0, infinitely loop.
 function wait_service() {

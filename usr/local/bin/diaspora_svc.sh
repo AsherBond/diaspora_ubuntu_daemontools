@@ -1,7 +1,8 @@
 #!/bin/bash
+. /etc/default/diaspora
 which=${1:?action}
 cd /etc/service
-diaspora=$(ls -1 | grep -vE '(mongo|nginx)')
+diaspora=$(ls -1 | grep -vE "($DB_SERVICE|nginx)")
 case $which in
 startall)
 	svc -u *

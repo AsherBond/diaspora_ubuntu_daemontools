@@ -28,21 +28,33 @@ errant services as well.
         + MTA (we run postfix)
         + Web server (we run nginx)
         + Redis
-        + MongoDB
+        + MongoDB|MySQL
         + Debian packages: [daemontools][dturl], [daemontools-run][drurl]
 
 ## Installation
 
-1. Get your packages
+1. Get your packages (pre MySQL conversion)
     * `apt-get install postfix nginx redis-server mongo daemontools daemontools-run`
-1. Stop init from starting your [Diaspora\*][durl] services
-    * `update-rc.d -f mongodb remove`
-    * `update-rc.d -f nginx remove`
-    * `update-rc.d -f redis-server remove`
-1. Stop services
-    * `service mongodb stop`
-    * `service nginx stop`
-    * `service redis-server stop`
+    1. Stop init from starting your [Diaspora\*][durl] services
+        * `update-rc.d -f mongodb remove`
+        * `update-rc.d -f nginx remove`
+        * `update-rc.d -f redis-server remove`
+    1. Stop services
+        * `service mongodb stop`
+        * `service nginx stop`
+        * `service redis-server stop`
+1. Get your packages (MySQL configuration)
+    * `apt-get install postfix nginx redis-server mysql-server mysql-client libmysqlclient-dev daemontools daemontools-run`
+    1. Stop upstart/init from starting your [Diaspora\*][durl] services
+        * `$EDITOR /etc/init/mysql.conf`
+				    * `start on runlevel [!0123456]`
+						* `stop on runlevel [!0123456]`
+        * `update-rc.d -f nginx remove`
+        * `update-rc.d -f redis-server remove`
+    1. Stop services
+        * `service mysql stop`
+        * `service nginx stop`
+        * `service redis-server stop`
 1. Disable nginx daemonizing (ie `daemon off;`)
     * `$EDITOR /etc/nginx/nginx.conf`
 		* `daemon off;`
